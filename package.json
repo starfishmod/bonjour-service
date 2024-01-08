@@ -24,7 +24,7 @@
     "build": "tsc --removeComments true",
     "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts",
     "example:simple": "node examples/simple",
-    "postinstall": "--removeComments true"
+    "postinstall": "tsc --removeComments true"
   },
   
   "repository": {
