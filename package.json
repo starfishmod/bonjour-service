@@ -23,8 +23,10 @@
     "test": "standard --fix && tape test/*.js",
     "build": "tsc --removeComments true",
     "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts",
-    "example:simple": "node examples/simple"
+    "example:simple": "node examples/simple",
+    "postinstall": "--removeComments true"
   },
+  
   "repository": {
     "type": "git",
     "url": "https://github.com/onlxltd/bonjour-service.git"
