@@ -41,6 +41,7 @@ export class Browser extends EventEmitter {
     private mdns        : any
     private onresponse  : CallableFunction | undefined  = undefined
     private serviceMap  : KeyValue  = {}
+    private serviceMapTTL  : KeyValue  = {}
 
     private txt         : any
     private name?       : string
@@ -106,6 +107,7 @@ export class Browser extends EventEmitter {
                 matches.forEach((service: Service) => {
                     if (self.serviceMap[service.fqdn]) {
                         self.updateService(service)
+
                         return
                     }
                     self.addService(service)
@@ -126,6 +128,12 @@ export class Browser extends EventEmitter {
 
     public update() {
         this.mdns.query(this.name, 'PTR')
+        Object.keys(this.serviceMapTTL).map(fqdn=>{
+            let now = Date.now();
+            if(now > this.serviceMapTTL[fqdn]){
+                this.removeService(fqdn);
+            }
+        })
     }
 
     public get services() {
@@ -137,10 +145,16 @@ export class Browser extends EventEmitter {
         if(filterService(service, this.txtQuery) === false) return
         this._services.push(service)
         this.serviceMap[service.fqdn] = true
+        // @ts-ignore
+        this.serviceMapTTL[service.fqdn] = Date.now() + service.ttl* 1000
         this.emit('up', service)
     }
 
     private updateService(service: Service) {
+        //Update ttl
+        // @ts-ignore
+        this.serviceMapTTL[service.fqdn] = Date.now() + service.ttl * 1000
+
         // check if txt updated
         if (equalTxt(service.txt, this._services.find((s) => dnsEqual(s.fqdn, service.fqdn))?.txt || {})) return
         // if the new service is not allowed by the txt query, remove it
@@ -168,6 +182,7 @@ export class Browser extends EventEmitter {
         if (!service || index === undefined) return
         this._services.splice(index, 1)
         delete this.serviceMap[fqdn]
+        delete this.serviceMapTTL[fqdn]
         this.emit('down', service)
     }
 
@@ -201,9 +216,10 @@ export class Browser extends EventEmitter {
           .filter((rr: ServiceRecord) => rr.type === 'PTR' && dnsEqual(rr.name, name))
           .map((ptr: ServiceRecord) => {
             const service: KeyValue = {
-              addresses: [],
-              subtypes: []
-            }
+                addresses: [],
+                subtypes: [],
+                ttl: ptr.ttl
+                }
 
             records.filter((rr: ServiceRecord) => {
                 return (rr.type === 'PTR' && dnsEqual(rr.data, ptr.data) && rr.name.includes('._sub'))
