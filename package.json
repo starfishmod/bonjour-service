@@ -22,7 +22,7 @@
     "build": "tsc",
     "dev": "ts-node-dev --respawn --transpile-only ./src/index.ts",
     "example:simple": "node examples/simple",
-    "postinstall": "tsc --removeComments true"
+    "postinstall": "tsc"
   },
   
   "repository": {
