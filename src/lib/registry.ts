@@ -49,10 +49,23 @@ export class Registry {
             const index = registry.services.indexOf(service)
             if (index !== -1) registry.services.splice(index, 1)
         }
+
+        function update(service: Service, registry: Registry, callback?: CallableFunction) {
+            if (!callback) callback = noop
+            if (!service.activated) return process.nextTick(callback)
+            if(!(service instanceof Service)) return process.nextTick(callback)
+
+            //registry.teardown(registry.server, service, callback)
+            //const index = registry.services.indexOf(service)
+            //if (index !== -1) registry.services.splice(index, 1)
+            registry.announce(registry.server, service)
+
+        }
         
         const service   = new Service(config)
         service.start   = start.bind(null, service, this)
         service.stop    = stop.bind(null, service, this)
+        service.update    = update.bind(null, service, this)
         service.start({ probe: config.probe !== false })
         return service
     }
@@ -133,6 +146,7 @@ export class Registry {
     
         // Register the records
         server.register(packet)
+        clearTimeout(service.announceTimeout)
 
         const broadcast = () => {
             if (!service.activated || service.destroyed) return
@@ -147,7 +161,7 @@ export class Registry {
                 }
                 delay = delay * REANNOUNCE_FACTOR
                 if (delay < REANNOUNCE_MAX_MS && !service.destroyed) {
-                    setTimeout(broadcast, delay).unref()
+                    service.announceTimeout = setTimeout(broadcast, delay).unref()
                 }
             })
         }

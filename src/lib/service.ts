@@ -62,8 +62,10 @@ export class Service extends EventEmitter {
 
     public start?       : CallableFunction
     public stop?        : CallableFunction
+    public update?        : CallableFunction
 
     private txtService  : DnsTxt
+    public announceTimeout : any
 
     constructor(config: ServiceConfig) {
         super()
@@ -84,6 +86,7 @@ export class Service extends EventEmitter {
         this.ttl            = config.ttl
         this.subtypes       = config.subtypes
         this.disableIPv6    = !!config.disableIPv6
+        this.announceTimeout = null;
     }
 
 
